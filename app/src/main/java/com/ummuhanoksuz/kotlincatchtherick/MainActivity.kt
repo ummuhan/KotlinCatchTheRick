@@ -1,19 +1,17 @@
 package com.ummuhanoksuz.kotlincatchtherick
 
-import android.content.Intent
-import android.opengl.Visibility
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.os.Handler
+import android.os.Looper
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import kotlin.random.Random
+import androidx.appcompat.app.AppCompatActivity
 
-class MainActivity : AppCompatActivity() {
+abstract class MainActivity : AppCompatActivity() {
     lateinit var timeText:TextView
     lateinit var scoreText:TextView
     var score=0
@@ -43,6 +41,8 @@ class MainActivity : AppCompatActivity() {
     lateinit var imageView23:ImageView
     lateinit var imageView24:ImageView
 
+    var runnable : Runnable = Runnable {  }
+    var handler = Handler(Looper.myLooper()!!)
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -77,28 +77,31 @@ class MainActivity : AppCompatActivity() {
 
         setDataImageArray()
 
-        object:CountDownTimer(15000,1000){
+        object:CountDownTimer(15000, 1000){
             override fun onTick(p0: Long) {
                 timeText.text="Time: ${p0/1000}"
             }
 
             override fun onFinish() {
-
+                handler.removeCallbacks(runnable)//Oyun bittikten sonra resimde durur
+                for(image in rickArray){
+                    image.visibility=View.INVISIBLE
+                }
                 var alert=AlertDialog.Builder(this@MainActivity)
                 alert.setTitle("Game Over")
                 alert.setMessage("Restart the game?")
-                alert.setPositiveButton("Yes"){dialog,which->
+                alert.setPositiveButton("Yes"){ dialog, which->
 
                     //Başka bir activitye gitmeden aynı activityi çağırma işlemi
                     var intent=intent
                     finish()
                     startActivity(intent)
                 }
-                alert.setNegativeButton("No"){dialog,which->
-                    Toast.makeText(this@MainActivity,"GOOD BYE!!",Toast.LENGTH_SHORT)
+                alert.setNegativeButton("No"){ dialog, which->
+                    Toast.makeText(this@MainActivity, "GOOD BYE!!", Toast.LENGTH_SHORT)
 
                     Handler().postDelayed({
-                    },2000)
+                    }, 2000)
                     finish()
                 }
                 alert.show()
@@ -113,9 +116,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun showImage(){
-        var rand=(0..24).random()
+        var runnable=object :Runnable{
+            override fun run() {
+                var rand=(0..24).random()
 
-        rickArray[rand].visibility=View.VISIBLE
+                rickArray[rand].visibility=View.VISIBLE
+                handler.postDelayed(runnable, 500)
+            }
+
+        }
+        handler.post(runnable)
     }
 
     fun setDataImageArray(){
